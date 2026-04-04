@@ -71,6 +71,13 @@ sudo apt install -y python3 python3-pip
 pip3 install flask
 ```
 
+### Check & Verify:
+
+```bash
+python3 --version
+pip3 --version
+```
+
 ---
 
 ## 📝 Step 4: Create Flask App
