@@ -1,4 +1,4 @@
-# AWS Docker Deployment Project
+# AWS Docker Deployment - Part-01
 
 This project demonstrates deploying a **Dockerized Node.js application** using multiple services from Amazon Web Services (AWS), including:
 
@@ -46,34 +46,11 @@ Deploy a Simple Web Page on an EC2 Instance by installing nginx server in a Dock
 
 ```bash
 #!/bin/bash
-# -----------------------------
-# Ubuntu EC2 Startup Script
-# -----------------------------
-
-# Update packages
 apt update -y
-apt upgrade -y
-
-# Install Docker
 apt install -y docker.io
-
-# Start Docker and enable on boot
 systemctl start docker
 systemctl enable docker
-
-# Add ubuntu user to docker group
 usermod -aG docker ubuntu
-
-# Create website directory and custom index.html
-mkdir -p /home/ubuntu/website
-echo "<html><h1>Hello, World!</h1></html>" > /home/ubuntu/website/index.html
-
-# Pull Nginx image
-docker pull nginx
-
-# Run Nginx container with host port 80, mounting custom website
-# --restart unless-stopped ensures container starts automatically on reboot
-docker run -d -p 80:80 --restart unless-stopped -v /home/ubuntu/website:/usr/share/nginx/html nginx
 ```
 -----
 
@@ -239,8 +216,123 @@ docker run -d -p 80:80 --restart unless-stopped -v /home/ubuntu/website:/usr/sha
 
 ---
 
+
+
 **Note:** This script also works if you create a custom AMI from this instance — any new instance launched from that AMI will already have 
 Docker installed, and Nginx will auto-start serving your page.
 
 -----
 
+ ## Make your setup AMI-ready, so new instances work WITHOUT any user data
+
+### Step 1: Prepare Your Original Instance (VERY IMPORTANT)
+
+SSH into your working Ubuntu instance:
+
+```batch
+ssh -i your-key.pem ubuntu@<IP>
+```
+
+### A. Ensure Docker starts on boot
+
+```batch
+sudo systemctl enable docker
+```
+
+### B. Run Nginx with auto-restart
+
+Stop any old container first
+
+```batch
+sudo docker ps    #copy the container id
+sudo docker stop <container_id>
+sudo docker rm <container_id>
+```
+
+### C. Now run it properly:
+
+```batch
+sudo docker run -d -p 80:80 --restart unless-stopped \
+-v /home/ubuntu/website:/usr/share/nginx/html nginx
+```
+
+> --restart unless-stopped = auto-start after reboot AND in AMI
+
+
+### D. Test before creating AMI
+
+**Reboot instance:**
+
+```batch
+sudo reboot
+```
+
+**After reboot:**
+
+Open browser → `http://<EC2-IP>`
+
+```batch
+You should still see **Hello World!**
+```
+
+
+✅ If yes → ready for AMI\
+❌ If not → fix before continuing
+
+
+----
+
+## Step 2: Create AMI
+
+- Go to EC2 → Instances
+- Select your instance
+- Click Actions → Image → Create Image
+
+Fill:
+
+- Name: `docker-nginx-ami`
+- Description: Docker + Nginx auto-start
+
+Wait until AMI status = `Available`
+
+---
+
+## Step 3: Launch New Instance from AMI
+
+- Go to AMIs
+- Select your AMI
+- Click Launch instance
+
+⚠️ **Important:**
+
+- Public IP: ✅ Enabled
+- Security Group: same (port 80 open)
+- User Data: **LEAVE EMPTY**
+
+----
+
+## Step 4: Verify
+
+Open browser:
+
+```bash
+http://<NEW-INSTANCE-IP>
+```
+
+You should instantly see:
+
+👉 **Hello World!**
+
+-----
+
+**No SSH. No Docker commands. No user data.**
+
+
+### Why??
+
+- **Docker** is installed in **AMI**
+- **Nginx** container already configured
+- **--restart unless-stopped** ensures it runs automatically
+- Your **HTML** file is already inside the instance
+
+-----
