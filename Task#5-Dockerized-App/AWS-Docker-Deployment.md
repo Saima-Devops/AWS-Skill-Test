@@ -1,14 +1,14 @@
 # AWS Docker Deployment - Part-01
 
-This project demonstrates deploying a **Dockerized Node.js application** using multiple services from Amazon Web Services (AWS), including:
+This project demonstrates deploying a simple **Dockerized application** using multiple services from Amazon Web Services (AWS), including:
 
- - EC2,
- - AMI,
- - ALB,
- - ECR, and
- - ECS
+ - EC2
+ - AMI
+ - ALB
+ - ECR (Part-02)
+ - ECS (Part-02)
    
-The workflow progresses from basic EC2 deployment to a fully managed container deployment using ECS.
+The workflow progresses from basic EC2 deployment to a fully managed container deployment.
 
 -----
 
@@ -22,9 +22,7 @@ The workflow progresses from basic EC2 deployment to a fully managed container d
 - ALB (Application Load Balancer)
 - AMI (Amazon Machine Image)
 
-
-
------
+----
 
 ## Task 1: Deploy Dockerized Web App on EC2
 
@@ -34,9 +32,9 @@ Deploy a Simple Web Page on an EC2 Instance by installing nginx server in a Dock
 
 **By Using Amazon EC2:**
 
-- AMI: Amazon Ubuntu 22.04 LTS
-- Instance: t2.micro
-- Security Group:
+- **AMI:** Amazon Ubuntu 22.04 LTS
+- **Instance:** t2.micro
+- **Security Group:**
 - Port 22 (SSH)
 - Port 80 (http access)
 
@@ -336,3 +334,101 @@ You should instantly see:
 - Your **HTML** file is already inside the instance
 
 -----
+
+## Task 4: How to Set Up a Load Balancer for Dockerized Applications 
+
+### Objective
+
+To configure an **Application Load Balancer (ALB)** that distributes HTTP traffic across two EC2 instances running Dockerized web applications.
+
+### Step 1: Create an Application Load Balancer
+
+- Go to AWS Console → EC2 → Load Balancers
+- Click Create Load Balancer
+- Choose Application Load Balancer
+
+#### Configuration:
+
+**Name:** docker-alb
+**Scheme:** Internet-facing
+**IP type:** IPv4
+**Listeners:** HTTP (Port 80)
+
+**Network Mapping:**
+ - Select your VPC (Same as before)\
+ - Choose at least 2 subnets in different Availability Zones
+
+**Security Group:**
+ - Create or select a Security Group with:
+  - HTTP (Port 80): 0.0.0.0/0
+
+
+<img width="1561" height="513" alt="image" src="https://github.com/user-attachments/assets/b5b2f64d-d6be-47e8-b226-aa281453738e" />
+
+----
+
+###  Step 2: Create a Target Group
+
+- Go to EC2 → Target Groups
+- Click Create Target Group
+- **Configuration:**
+ - **Target type:** Instances
+- **Protocol:** HTTP
+ - Port: 80
+- **Target group name:** `docker-target-group`
+
+**Health Check:**
+- Protocol: HTTP
+- Path: /
+
+Click `Next`
+
+----
+
+### Step 3: Register EC2 Instances
+
+- Select your two EC2 instances
+- Click Include as pending below
+- Click Create **Target Group**
+
+----
+
+### Step 4: Attach Target Group to Load Balancer
+
+- Go back to Load Balancers
+- Select your ALB
+- Go to Listeners tab
+- Click View/Edit Rules
+
+**Configure:**
+Forward traffic to:  →  `docker-target-group`
+
+**Save changes**
+
+----
+
+### Step 6: Verify Load Balancer
+
+- Go to ALB details
+- Copy the DNS name
+
+Example:
+```batch
+http://your-alb-123456.region.elb.amazonaws.com
+```
+
+**Open in browser**
+
+<img width="1918" height="363" alt="image" src="https://github.com/user-attachments/assets/48921938-6d67-45bb-8509-6b008c1b7971" />
+
+
+**After Refresh**
+
+<img width="1919" height="416" alt="image" src="https://github.com/user-attachments/assets/2b6a9e70-a64f-4a70-9805-d7fe9039fa99" />
+
+
+
+**Both Targets are Healthy**
+
+<img width="1567" height="442" alt="image" src="https://github.com/user-attachments/assets/e14f6300-ad51-4cf5-95c7-2d59961f00e1" />
+
