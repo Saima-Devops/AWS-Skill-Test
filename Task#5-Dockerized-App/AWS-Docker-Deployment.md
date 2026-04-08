@@ -407,7 +407,7 @@ Forward traffic to:  →  `docker-target-group`
 
 ----
 
-### Step 6: Verify Load Balancer
+### Step 5: Verify Load Balancer
 
 - Go to ALB details
 - Copy the DNS name
@@ -431,4 +431,32 @@ http://your-alb-123456.region.elb.amazonaws.com
 **Both Targets are Healthy**
 
 <img width="1567" height="442" alt="image" src="https://github.com/user-attachments/assets/e14f6300-ad51-4cf5-95c7-2d59961f00e1" />
+
+----
+
+### Step 6: Verify Load Balancing 
+
+#### Method 1: Modify Each Instance Page 
+
+- SSH into Instance 1:
+- See the contents (ls)
+- cd /website
+- nano index.html
+   - <h4>Hello World from EC2-1</h4>
+
+- SSH into Instance 2:
+- Repeat the same
+  - <h4>Hello World from EC2-2</h4>
+
+- Now refresh the ALB DNS multiple times.
+
+#### Expected Result:
+
+Page alternates between:
+- EC2-1
+- EC2-2
+
+✅ This confirms load balancing is working.
+
+-----
 
